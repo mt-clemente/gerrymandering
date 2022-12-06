@@ -16,14 +16,14 @@ pub fn local_search(pb: &Problem, sol: &mut State) {
         let temp = sol.clone();
         let mut circs: Vec<&Circonsciption> = temp.circonscriptions.values().collect();
 
-        circs.sort_by_key(|a| a.close_to_vic(&pb));
+        circs.sort_by_key(|a| a.close_to_vic(pb));
 
         for circ in circs.clone() {
-            let mut targets = circ.swap_available(&pb);
-            targets.sort_by_key(|a| -circ.swap_heuristic(a.0, a.1, &mut sol.clone(), &pb).1);
+            let mut targets = circ.swap_available(pb);
+            targets.sort_by_key(|a| -circ.swap_heuristic(a.0, a.1, &mut sol.clone(), pb).1);
 
             for t in targets {
-                let (best_swap, val) = circ.swap_heuristic(t.0, t.1, &mut sol.clone(), &pb);
+                let (best_swap, val) = circ.swap_heuristic(t.0, t.1, &mut sol.clone(), pb);
 
                 // if the best we can do has a heuristic of 0 it means that we cannot do better on this
                 // circonscription (with our algorithm)
@@ -104,7 +104,7 @@ pub fn init_sol(pb: &Problem) -> State {
         c += 1;
     }
 
-    let mut sol = State::new_empty(&pb);
+    let mut sol = State::new_empty(pb);
 
     let mut p = 0;
 
@@ -112,11 +112,7 @@ pub fn init_sol(pb: &Problem) -> State {
         for j in 0..(pb.ly / y) {
             for (di, pi) in pattern.iter().enumerate().take(x) {
                 for (dj, pj) in pi.iter().enumerate().take(y) {
-                    sol.update_grid(
-                        (i * x + di, j * y + dj),
-                        pj + p * x * y / k,
-                        pb,
-                    )
+                    sol.update_grid((i * x + di, j * y + dj), pj + p * x * y / k, pb)
                 }
             }
 

@@ -26,12 +26,12 @@ impl Problem {
         threshold: usize,
     ) -> Problem {
         Problem {
-            lx: lx,
-            ly: ly,
+            lx,
+            ly,
             n: lx * ly,
-            m: m,
-            votes: votes,
-            threshold: threshold,
+            m,
+            votes,
+            threshold,
             radius: ceil_div(lx * ly, 2 * m),
         }
     }
@@ -57,12 +57,12 @@ impl State {
         let mut circonscriptions: HashMap<usize, Circonsciption> = HashMap::with_capacity(pb.m);
 
         for i in 0..pb.m {
-            circonscriptions.insert(i + 1, Circonsciption::new(i + 1, &pb));
+            circonscriptions.insert(i + 1, Circonsciption::new(i + 1, pb));
         }
 
         State {
-            grid: grid,
-            circonscriptions: circonscriptions,
+            grid,
+            circonscriptions,
         }
     }
 
@@ -125,7 +125,7 @@ impl State {
             self.circonscriptions
                 .get_mut(&prev_circ_id)
                 .unwrap()
-                .remove_mun(x, y, &pb);
+                .remove_mun(x, y, pb);
         }
 
         self.circonscriptions
@@ -161,7 +161,7 @@ pub struct Circonsciption {
 impl Circonsciption {
     pub fn new(id: usize, pb: &Problem) -> Circonsciption {
         Circonsciption {
-            id: id,
+            id,
             domain: Vec::with_capacity(2 * pb.radius.pow(2) - 2 * pb.radius),
             municipalities: Vec::with_capacity(pb.m),
         }
@@ -169,7 +169,7 @@ impl Circonsciption {
 
     pub fn init(&mut self, pb: &Problem, mun: (usize, usize, usize)) {
         self.municipalities.push(mun);
-        self.domain = create_domain(mun, &pb);
+        self.domain = create_domain(mun, pb);
     }
 
     pub fn len(&self) -> usize {
@@ -187,7 +187,7 @@ impl Circonsciption {
             }
         }
 
-        let d = create_domain((x, y, 0), &pb);
+        let d = create_domain((x, y, 0), pb);
         let temp = self.domain.clone();
 
         for d_mun in d {
@@ -213,8 +213,8 @@ impl Circonsciption {
     }
 
     fn push(&mut self, mun: (usize, usize, usize), pb: &Problem) {
-        if self.domain.len() == 0 {
-            self.init(&pb, mun);
+        if self.domain.is_empty() {
+            self.init(pb, mun);
         } else {
             if !self.domain.contains(&(mun.0, mun.1)) {
                 let mut err_correction = true;
@@ -281,7 +281,7 @@ impl Circonsciption {
             }
         }
 
-        if swapable.len() == 0 {
+        if swapable.is_empty() {
             return ((0, 0), 0);
         }
 

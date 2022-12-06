@@ -5,7 +5,7 @@ use std::path::Path;
 pub fn parse_file(fname: &str) -> (usize, usize, Vec<Vec<usize>>) {
     if let Ok(mut lines) = read_lines(fname) {
         if let Some(Ok(s)) = lines.next() {
-            let dims: Vec<&str> = s.split(" ").collect();
+            let dims: Vec<&str> = s.split(' ').collect();
             let lx: usize = dims[0].parse().unwrap();
             let ly: usize = dims[1].parse().unwrap();
             println!("Treating {lx} x {ly} grid");
@@ -15,7 +15,7 @@ pub fn parse_file(fname: &str) -> (usize, usize, Vec<Vec<usize>>) {
             for line in lines {
                 if let Ok(s) = line {
                     let parsed: Vec<usize> =
-                        s.split(" ").flat_map(|x| x.parse::<usize>()).collect();
+                        s.split(' ').flat_map(|x| x.parse::<usize>()).collect();
 
                     grid.push(parsed);
                 }
@@ -44,7 +44,7 @@ pub fn print_sol(sol: Vec<Vec<usize>>) {
             print!("{} ", sol[i][j]);
         }
 
-        print!("\n");
+        println!("");
     }
 }
 
