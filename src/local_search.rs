@@ -20,12 +20,10 @@ pub fn local_search(pb: &Problem,sol: & mut State) {
 
         for circ in circs.clone() {
 
-            dbg!(circ.municipalities.len());
             let mut targets = circ.swap_available(&pb);
             targets.sort_by_key(|a| - circ.swap_heuristic(a.0, a.1, &mut sol.clone(), &pb).1);
 
 
-            println!(" -------------------- CIRC n {} ------------------------",circ.id);
             for t in targets {
                 let (best_swap, val) = circ.swap_heuristic(t.0, t.1, & mut sol.clone(), &pb);
 
@@ -36,19 +34,18 @@ pub fn local_search(pb: &Problem,sol: & mut State) {
                     continue;
                 }
 
+
                 let prev_score = sol.get_score();
-                dbg!(circ.id);
-                dbg!(circ.swap_available(&pb).contains(&t));
-                sol.swap((best_swap.0, best_swap.1), t, pb);
+                sol.swap(best_swap, t, pb);
 
+                
                 // handle the case where the swap results in a worse situation
-                if  !sol.get_score() >= prev_score {
-
-                    sol.swap(t, (best_swap.0, best_swap.1), pb);
+                if  sol.get_score() <= prev_score {
+                    
+                    sol.swap(best_swap, t, pb);
                     updated = false;
                     
                 } else {
-                    println!("updated");
                     updated = true;
                     
                     break;
@@ -59,7 +56,7 @@ pub fn local_search(pb: &Problem,sol: & mut State) {
             // better solution found, as no solution will give us a better score difference than 1
             // we can break instead of testing the rest of the neighborhood
             if updated {
-                print!("New score --> {} \r",sol.get_score());
+                println!("New score --> {} \r",sol.get_score());
                 break
             }
             

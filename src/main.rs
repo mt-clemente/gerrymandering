@@ -22,6 +22,8 @@ fn main() {
     dbg!(sol.get_score());
     print_sol(sol.get_grid());
     local_search(&pb,sol);
+    dbg!(sol.is_valid(&pb));
+    print_sol(sol.get_grid());
 }
 
 

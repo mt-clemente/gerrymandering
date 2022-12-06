@@ -60,7 +60,7 @@ impl State {
         State { grid: grid, circonscriptions: circonscriptions }
     }
 
-    fn is_valid(&self, pb: &Problem) -> bool {
+    pub fn is_valid(&self, pb: &Problem) -> bool {
 
         if self.circonscriptions.len() != pb.m{
             return false
@@ -68,45 +68,27 @@ impl State {
 
         for circ in self.circonscriptions.values() {
             if pb.n % pb.m == 0 && pb.n / pb.m != circ.len() {
+                dbg!("a");
                 return false
             }
-
-            if (pb.n / pb.m) >= circ.len() || circ.len() >= (pb.n / pb.m) + 1 {
+            
+            if (pb.n / pb.m) > circ.len() || circ.len() > (pb.n / pb.m) + 1 {
+                dbg!("B");
                 return false
             }
-
+            
             let temp = circ.clone();
-
-
-            let mut lb = (0,0,0);
-            let mut lt = (0,0,0);
-            let mut rb = (0,0,0);
-            let mut rt = (0,0,0);
-
-
-            for elt in temp.municipalities.iter() {
-                if elt.0 <= lb.0 && elt.1 <= lb.1  {
-                    lb = *elt;
-                    continue
+            
+            
+            for m1 in &circ.municipalities {
+                for m2 in &circ.municipalities {
+                    if m1.0.abs_diff(m2.0) + m1.1.abs_diff(m2.1) > pb.radius {
+                            dbg!(m1,m2);
+                            return false
+                        }
+                    }
                 }
-                if elt.0 <= lt.0 && elt.1 >= lt.1  {
-                    lt = *elt;
-                    continue
-                }
-                if elt.0 >= rb.0 && elt.1 <= rb.1  {
-                    rb = *elt;
-                    continue
-                }
-                if elt.0 >= rt.0 && elt.1 >= rt.1  {
-                    rt = *elt;
-                }
-                
-            }
-
-
-            if cmp::max(rt.0.abs_diff(lb.0) + rt.1.abs_diff(lb.1), lt.0.abs_diff(rb.0) + lt.1.abs_diff(rb.1) ) > pb.n / (2 * pb.m) {
-                return false
-            }
+            
 
         }
 
@@ -156,8 +138,6 @@ impl State {
     pub fn swap(& mut self, origin: (usize, usize), target: (usize, usize), pb: &Problem ) {
         
         let temp = self.grid[origin.0][origin.1];
-        dbg!(self.grid[target.0][target.1]);
-        dbg!(self.grid[origin.0][origin.1]);
         self.update_grid((origin.0, origin.1),self.grid[target.0][target.1], pb);
         self.update_grid((target.0, target.1),temp, pb);
 
@@ -199,12 +179,11 @@ impl Circonsciption {
 
     pub fn remove_mun(& mut self, x: usize, y: usize, pb : &Problem) {
 
+        let init_len = self.municipalities.len();
         
-        for i in 0..self.municipalities.len() {
+        for (i,mun) in self.municipalities.iter().enumerate() {
             
-            let m = self.municipalities[i];
-            
-            if m.0 == x && m.1 == y {
+            if mun.0 == x && mun.1 == y {
                 self.municipalities.swap_remove(i);
                 
                 break;
@@ -214,7 +193,6 @@ impl Circonsciption {
         let d = create_domain((x,y,0), &pb);
         let temp = self.domain.clone();
 
-        let t =self.domain.len(); 
         for d_mun in d {
             
             let mut in_domain = true;
@@ -235,9 +213,10 @@ impl Circonsciption {
 
             if in_domain {
                 self.domain.push(d_mun);
-                print!("added");
             }
         }
+
+        assert!(self.municipalities.len() + 1 == init_len);
 
     }
 
@@ -249,12 +228,25 @@ impl Circonsciption {
 
         } else {
 
+            if !self.domain.contains(&(mun.0,mun.1)) {
+                let mut err_correction = true;
+                for m in &self.municipalities {
+                    if mun.0.abs_diff(m.0) + mun.1.abs_diff(m.1) > pb.radius {
+                        err_correction = false;
+                        break;
+                    }
+                }
+                
+                if err_correction {
+                    self.domain.push((mun.0,mun.1))
+                }
+            }
             assert!(self.domain.contains(&(mun.0,mun.1)));
             assert!(!self.municipalities.contains(&mun));
             
             self.municipalities.push(mun);
             
-                
+            
             self.domain.retain(|elt| mun.0.abs_diff(elt.0) + mun.1.abs_diff(elt.1) <= pb.radius);
                 
         }
@@ -320,31 +312,11 @@ impl Circonsciption {
 
     /// Return positions that are available to swap with this a municipality from this circonscription
     pub fn swap_available(&self, pb: &Problem) -> Vec<(usize, usize)>{
+
         let mut available = self.domain.clone();
-
-        /*         let i = self.municipalities.iter().map(|x| x.0);
-        let j = self.municipalities.iter().map(|x| x.1);
-
-
-        let low_i = null_saturated_sub(i.clone().max().unwrap(),pb.radius);
-        let low_j = null_saturated_sub(j.clone().max().unwrap(), pb.radius);
-        let up_i = min(pb.lx-1, i.min().unwrap() + pb.radius);
-        let up_j = min(pb.ly-1, j.min().unwrap() + pb.radius);
-
-        for i in  low_i..up_i{
-            for j in low_j..up_j {
-
-                let temp: Vec<(usize,usize)> = self.municipalities.clone().iter().map(|x| (x.0,x.1)).collect();
-                if self.domain.contains(&(i,j)) && !temp.contains(&(i,j)){
-                    available.push((i,j));
-                }
-            }
-        } */
-
         let occupied : Vec<(usize,usize)>= self.municipalities.iter().map(|x| (x.0,x.1)).collect();
 
         available.retain(|x| !occupied.contains(x));
-
         available
 
     }
@@ -358,28 +330,6 @@ impl Clone for Circonsciption {
         Circonsciption { domain: self.domain.clone(), municipalities: self.municipalities.clone(), id : self.id}
     }
 }
-
-struct Neighborhood {
-    states : Vec<State>
-}
-
-impl Neighborhood {
-    
-    fn new(states : Vec<State>) -> Neighborhood{
-        Neighborhood {states: states}
-    }
-
-    fn is_empty(&self) -> bool {
-        return self.states.len() == 0
-    }
-
-    fn remove(& mut self,idx: usize) {
-        self.states.remove(idx);
-    }
-
-
-}
- 
 
 
 pub fn create_domain(mun: (usize,usize,usize), pb: &Problem) -> Vec<(usize,usize)> {
