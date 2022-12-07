@@ -1,11 +1,9 @@
-#![allow(dead_code)]
 use std::{
-    cmp::{self},
     collections::HashMap,
     vec,
 };
 
-use crate::util::{ceil_div, null_saturated_sub};
+use crate::util::{ceil_div};
 
 pub struct Problem {
     pub lx: usize,
@@ -36,14 +34,6 @@ impl Problem {
         }
     }
 
-    fn size_split(&self) -> (usize, usize) {
-        let r = self.n % self.m;
-        (r, self.m - r)
-    }
-
-    pub fn m(&self) -> usize {
-        self.m
-    }
 }
 
 pub struct State {
@@ -66,6 +56,8 @@ impl State {
         }
     }
 
+
+    #[allow(dead_code)]
     pub fn is_valid(&self, pb: &Problem) -> bool {
         if self.circonscriptions.len() != pb.m {
             return false;
@@ -81,8 +73,6 @@ impl State {
                 dbg!("B");
                 return false;
             }
-
-            let temp = circ.clone();
 
             for m1 in &circ.municipalities {
                 for m2 in &circ.municipalities {
@@ -137,6 +127,12 @@ impl State {
 
     pub fn swap(&mut self, origin: (usize, usize), target: (usize, usize), pb: &Problem) {
         let temp = self.grid[origin.0][origin.1];
+
+        if !self.circonscriptions.get(&self.grid[target.0][target.1]).unwrap().domain.contains(&origin) 
+           || !self.circonscriptions.get(&self.grid[origin.0][origin.1]).unwrap().domain.contains(&target) 
+        {
+            return
+        }
         self.update_grid((origin.0, origin.1), self.grid[target.0][target.1], pb);
         self.update_grid((target.0, target.1), temp, pb);
     }
@@ -208,7 +204,6 @@ impl Circonsciption {
                 self.domain.push(d_mun);
             }
         }
-
         assert!(self.municipalities.len() + 1 == init_len);
     }
 
@@ -224,9 +219,11 @@ impl Circonsciption {
                         break;
                     }
                 }
-
+                
                 if err_correction {
                     self.domain.push((mun.0, mun.1))
+                } else {
+
                 }
             }
             assert!(self.domain.contains(&(mun.0, mun.1)));
@@ -239,9 +236,6 @@ impl Circonsciption {
         }
     }
 
-    fn get_available_muns(&self) -> Vec<(usize, usize)> {
-        self.domain.clone()
-    }
 
     fn get_votes(&self) -> usize {
         let mut votes = 0;
@@ -268,7 +262,6 @@ impl Circonsciption {
         i: usize,
         j: usize,
         state: &mut State,
-        pb: &Problem,
     ) -> ((usize, usize), i128) {
         let grid = state.get_grid();
         let target_circ = state.circonscriptions.get(&state.grid[i][j]).unwrap();
@@ -276,7 +269,7 @@ impl Circonsciption {
         let mut swapable: Vec<(usize, usize)> = Vec::new();
 
         for mun in &self.municipalities {
-            if target_circ.swap_available(pb).contains(&(mun.0, mun.1)) {
+            if target_circ.swap_available().contains(&(mun.0, mun.1)) {
                 swapable.push((mun.0, mun.1));
             }
         }
@@ -299,7 +292,7 @@ impl Circonsciption {
     }
 
     /// Return positions that are available to swap with this a municipality from this circonscription
-    pub fn swap_available(&self, pb: &Problem) -> Vec<(usize, usize)> {
+    pub fn swap_available(&self) -> Vec<(usize, usize)> {
         let mut available = self.domain.clone();
         let occupied: Vec<(usize, usize)> =
             self.municipalities.iter().map(|x| (x.0, x.1)).collect();

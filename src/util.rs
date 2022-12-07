@@ -2,6 +2,8 @@ use std::fs::File;
 use std::io::{self, BufRead};
 use std::path::Path;
 
+use crate::base::{State};
+
 pub fn parse_file(fname: &str) -> (usize, usize, Vec<Vec<usize>>) {
     if let Ok(mut lines) = read_lines(fname) {
         if let Some(Ok(s)) = lines.next() {
@@ -38,6 +40,7 @@ where
     Ok(io::BufReader::new(file).lines())
 }
 
+#[allow(dead_code)]
 pub fn print_sol(sol: Vec<Vec<usize>>) {
     for i in 0..sol.len() {
         for j in 0..sol[0].len() {
@@ -56,11 +59,13 @@ pub fn ceil_div(n: usize, k: usize) -> usize {
     n / k + 1
 }
 
-/// Returns 0 if a < b ir the difference between a and b otherwise
-pub fn null_saturated_sub(a: usize, b: usize) -> usize {
-    if a < b {
-        return 0;
-    }
 
-    a - b
+pub fn print_cirs(sol : &State) {
+    for (_, circ) in sol.circonscriptions.iter() {
+        for mun in circ.municipalities.clone() {
+            print!("{} {} ",mun.0,mun.1);
+        }
+        print!("\n");
+    }
+    print!("\n");
 }
